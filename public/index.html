@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>What was good today?</title>
+    <!-- Not present in the tutorial. Just for basic styling. -->
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.0/react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.0/react-dom.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.15/browser.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min.js"></script>
+  </head>
+  <body>
+    <div id="content"></div>
+    <script type="text/babel">
+      var submitted = false;
+      var EntryBox = React.createClass({
+        loadEntriesFromServer: function() {
+          $.ajax({
+            url: this.props.url,
+            dataType: 'json',
+            cache: false,
+            success: function(data) {
+              this.setState({data: data, submitted: data[data.length-1].date==today});
+            }.bind(this),
+            error: function(xhr, status, err) {
+              console.error(this.props.url, status, err.toString());
+            }.bind(this)
+          });
+        },
+        handleEntrySubmit: function(entry) {
+          var entries = this.state.data;
+          if (entry.date !== entries[entries.length-1].date) {
+            $.ajax({
+              url: this.props.url,
+              dataType: 'json',
+              type: 'POST',
+              data: entry,
+              success: function(data) {
+                this.setState({data: data});
+              }.bind(this),
+              error: function(xhr, status, err) {
+                console.error(this.props.url, status, err.toString());
+              }.bind(this)
+            });
+          }
+          else {
+            alert('entry already exists')
+          }
+        },
+        getInitialState: function() {
+          return {data: [], submitted: false};
+        },
+        componentDidMount: function() {
+          this.loadEntriesFromServer();
+          setInterval(this.loadEntriesFromServer, this.props.pollInterval);
+        },
+        render: function() {
+          return (
+            <div className="entryBox">
+              <h2 className="todayHeader">Today is {today}.</h2>
+              <EntryForm onEntrySubmit={this.handleEntrySubmit} submitted={this.state.submitted} />
+              <EntryList data={this.state.data} />
+            </div>
+          );
+        }
+      });
+
+      var EntryList = React.createClass({
+        render: function() {
+          var entryNodes = this.props.data.reverse().map(function(entry) {
+            return (                
+              <Entry date={entry.date} key={entry.id}>
+                {entry.text}
+              </Entry>
+            );
+          });
+          return (
+            <div className="entryList">
+              <h4>Your Entries</h4>
+              {entryNodes}
+            </div>
+          );
+        }
+      });
+
+      var today = new Date();
+      var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      var dd = today.getDate();
+      var mm = today.getMonth(); //January is 0!
+      today = months[mm]+' '+dd;//+'/'+yyyy;
+
+      var TodayHeader = React.createClass({
+        render: function() {
+          return (
+            <h2 className="todayHeader">Today is {today}.</h2>
+          );          
+        }
+      })
+
+      var EntryForm = React.createClass({
+        getInitialState: function() {
+          return {date: today, text: ''};
+        },
+        handleTextChange: function(e) {
+          this.setState({text: e.target.value});
+        },
+        handleSubmit: function(e) {
+          e.preventDefault();
+          var date = today;
+          var text = this.state.text.trim();
+          if (!text || !date) {
+            return;
+          }
+          this.props.onEntrySubmit({date: date, text: text});
+          this.setState({date: '', text: '', submitted: true});
+        },
+        render: function() {
+          if (!this.props.submitted) {
+            return (
+              <div className="entryForm">
+                <h4>What was good today?</h4>
+                <form onSubmit={this.handleSubmit}>                
+                  <textarea value={this.state.text} onChange={this.handleTextChange}>
+                  </textarea><br/>
+                  <input type="submit" value="Post Entry" />
+                </form>
+              </div>
+            );
+          }
+          else {
+            return (
+            <div className="entryForm">
+              <h4>You have submitted an entry for today.</h4>
+            </div>
+          );
+          }
+        }
+      });
+
+      var Entry = React.createClass({
+        render: function() {
+          return (
+            <div className="entry">
+              <b className="entryDate">
+                {this.props.date}
+              </b> {this.props.children}
+            </div>
+          );
+        }
+      });
+
+      ReactDOM.render(
+        <EntryBox url="/api/entries" pollInterval={2000} />,        
+        document.getElementById('content')
+      );
+    </script>
+  </body>
+</html>

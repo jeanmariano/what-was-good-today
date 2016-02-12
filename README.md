@@ -1,8 +1,6 @@
-[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
+# What was good today?
 
-# React Tutorial
-
-This is the React comment box example from [the React tutorial](http://facebook.github.io/react/docs/tutorial.html).
+Adapted from the React comment box example from [the React tutorial](http://facebook.github.io/react/docs/tutorial.html).
 
 ## To use
 
@@ -13,35 +11,6 @@ There are several simple server implementations included. They all serve static 
 ```sh
 npm install
 node server.js
-```
-
-### Python
-
-```sh
-pip install -r requirements.txt
-python server.py
-```
-
-### Ruby
-```sh
-ruby server.rb
-```
-
-### PHP
-```sh
-php server.php
-```
-
-### Go
-```sh
-go run server.go
-```
-
-### Perl
-
-```sh
-cpan Mojolicious
-perl server.pl
 ```
 
 And visit <http://localhost:3000/>. Try opening multiple tabs!
